@@ -8,17 +8,22 @@ from scrapy import Request
 class ThzspiSpider(scrapy.Spider):
     name = 'thzspi'
     allowed_domains = ['thzibt.com']
-    start_urls = ['http://thzibt.com/forum.php?mod=viewthread&tid=1136271&extra=page%3D1%26filter%3Dtypeid%26typeid%3D322']
+    start_urls = ['http://thzibt.com/thread-731418-1-1.html']
 
     def parse(self, response):
         item = ThzbtItem()
         s = response.xpath('//div[@class="t_fsz"]').extract()[0]
         item['image_urls'] = re.findall(r'file="(.*?)"',s)
-        item['name'] = re.findall(r'【影片名稱】：(.*?)<br>',s)
-        item['fan'] = re.findall(r'番】 :(.*?)<br>',s)
-        id1 = re.findall(r'<a href="(.*?)" onmouseover',s)[0]
-        id2 = re.findall(r'imc_attachad-ad\.html\?(.*)',id1)[0]
-        item['bt_url'] = ['http://thzibt.com/forum.php?mod=attachment&' + id2]
+        item['name'] = response.xpath('//span[@id="thread_subject"]/text()').extract()
+        item['fan'] = response.xpath('//title/text()').extract()
+        try:
+            id = re.findall(r'imc_attachad-ad\.html\?(.*?)"',s).pop()
+            btls = re.findall(r'(.*?)%3D&amp;nothumb',id)
+            if len(btls) != 0:
+                id = btls[0]
+            item['bt_url'] = ['http://thzibt.com/forum.php?mod=attachment&' + id]
+        except Exception as e:
+            print('这个页面没有种子')
         yield item
 
         x = response.xpath('//div[@class="pcb"]').extract()[0]

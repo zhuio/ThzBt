@@ -6,13 +6,13 @@
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
 import scrapy
+import re
 from scrapy.contrib.pipeline.images import ImagesPipeline
 from scrapy.contrib.pipeline.files import FilesPipeline
 from scrapy.exceptions import DropItem
 from fake_useragent import UserAgent
 ua = UserAgent()
-headers = {"User-Agent": ua.chrome,
-"Referer":"thzibt.com"}
+headers = {"User-Agent": ua.chrome, "Referer":"thzibt.com"}
 class MyImagesPipeline(ImagesPipeline):
     def file_path(self, request, response=None, info=None):
         fname = request.meta['fan'] + '_' + request.url.split('/')[-1]
@@ -22,6 +22,9 @@ class MyImagesPipeline(ImagesPipeline):
 
     def get_media_requests(self, item, info):
         for image_url in item['image_urls']:
+            ls = re.findall(r'data',image_url)
+            if len(ls) != 0:
+                image_url = 'http://thzibt.com' + image_url
             yield scrapy.Request(image_url,headers = headers,meta={'name': item['name'][0],'fan': item['fan'][0]})
 
     def item_completed(self, results, item, info):
